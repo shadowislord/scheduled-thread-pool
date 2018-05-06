@@ -175,10 +175,18 @@ impl ScheduledThreadPool {
     where
         F: FnOnce() + Send + 'static,
     {
+        self.execute_on(Instant::now() + delay, job)
+    }
+
+    /// Executes a closure at a particular instant in the pool.
+    pub fn execute_on<F>(&self, time: Instant, job: F) -> JobHandle
+    where
+        F: FnOnce() + Send + 'static,
+    {
         let canceled = Arc::new(AtomicBool::new(false));
         let job = Job {
             type_: JobType::Once(Thunk::new(job)),
-            time: Instant::now() + delay,
+            time: time,
             canceled: canceled.clone(),
         };
         self.shared.run(job);
